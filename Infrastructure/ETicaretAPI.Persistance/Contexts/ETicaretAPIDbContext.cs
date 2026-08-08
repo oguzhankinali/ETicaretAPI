@@ -33,7 +33,7 @@ namespace ETicaretAPI.Persistance.Contexts
                     data.Entity.UpdatedDate = DateTime.UtcNow;
                 }
             }
-                
+0                
             return await base.SaveChangesAsync(cancellationToken);
         }
 
