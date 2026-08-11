@@ -31,9 +31,10 @@ namespace ETicaretAPI.Persistance.Contexts
                 else if (data.State == EntityState.Modified)
                 {
                     data.Entity.UpdatedDate = DateTime.UtcNow;
+                    data.Property(x => x.CreatedDate).IsModified = false;
                 }
             }
-0                
+                
             return await base.SaveChangesAsync(cancellationToken);
         }
 

@@ -11,7 +11,7 @@ namespace ETicaretAPI.API
 
             builder.Services.AddPersistanceServices(builder.Configuration);
             builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
-            policy.WithOrigins("http://localhost:4200", "https://localhost:4200").AllowAnyHeader().AllowAnyMethod()));
+            policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "http://localhost:5173", "https://localhost:5173").AllowAnyHeader().AllowCredentials().AllowAnyMethod()));
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -24,8 +24,9 @@ namespace ETicaretAPI.API
                 app.UseSwaggerUI();
             }
 
-            app.UseCors();
             app.UseHttpsRedirection();
+            app.UseCors();
+
 
             app.UseAuthorization();
 
