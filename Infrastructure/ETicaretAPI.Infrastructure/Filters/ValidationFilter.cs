@@ -19,7 +19,8 @@ namespace ETicaretAPI.Infrastructure.Filters
                     .ToDictionary(e => e.Key, e => e.Value.Errors.Select(e => e.ErrorMessage))
                     .ToArray();
 
-                context.Result = new BadRequestObjectResult(errors); 
+                context.Result = new BadRequestObjectResult(errors);
+                return;
             }
             await next();
         }

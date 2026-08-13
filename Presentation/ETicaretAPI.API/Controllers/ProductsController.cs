@@ -1,4 +1,5 @@
 ﻿using ETicaretAPI.Application.Repositories;
+using ETicaretAPI.Application.RequestParameters;
 using ETicaretAPI.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,7 @@ namespace ETicaretAPI.API.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetProducts()
+        public IActionResult GetProducts([FromQuery] Pagination pagination)
         {
             var products = _productReadRepository.GetAll(false);
             return Ok(products);
