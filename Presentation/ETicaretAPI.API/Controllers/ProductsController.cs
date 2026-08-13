@@ -25,6 +25,12 @@ namespace ETicaretAPI.API.Controllers
             var products = _productReadRepository.GetAll(false);
             return Ok(products);
         }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(string id)
+        {
+            var product = await _productReadRepository.GetByIdAsync(id, false);
+            return Ok(product);
+        }
         [HttpPost]
         public async Task<IActionResult> AddProduct(Product product)
         {

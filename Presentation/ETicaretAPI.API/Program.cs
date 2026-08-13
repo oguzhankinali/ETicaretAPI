@@ -1,5 +1,8 @@
 
+using ETicaretAPI.Application.Validators.Products;
+using ETicaretAPI.Infrastructure.Filters;
 using ETicaretAPI.Persistance;
+using FluentValidation;
 
 namespace ETicaretAPI.API
 {
@@ -12,9 +15,15 @@ namespace ETicaretAPI.API
             builder.Services.AddPersistanceServices(builder.Configuration);
             builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
             policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "http://localhost:5173", "https://localhost:5173").AllowAnyHeader().AllowCredentials().AllowAnyMethod()));
-            builder.Services.AddControllers();
+            builder.Services.AddControllers(options => options.Filters.Add<ValidationFilter>()).ConfigureApiBehaviorOptions(options =>
+            {
+                options.SuppressModelStateInvalidFilter = true;
+            });
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddValidatorsFromAssemblyContaining<CreateProductValidator>();
+             
 
             var app = builder.Build();
 
