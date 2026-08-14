@@ -3,6 +3,7 @@ using ETicaretAPI.Application.RequestParameters;
 using ETicaretAPI.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ETicaretAPI.API.Controllers
 {
@@ -12,19 +13,36 @@ namespace ETicaretAPI.API.Controllers
     {
         private readonly IProductReadRepository _productReadRepository;
         private readonly IProductWriteRepository _productWriteRepository;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
 
-        public ProductsController(IProductReadRepository productReadRepository, IProductWriteRepository productWriteRepository)
+        public ProductsController(IProductReadRepository productReadRepository, IProductWriteRepository productWriteRepository, IWebHostEnvironment webHostEnvironment)
         {
             _productReadRepository = productReadRepository;
             _productWriteRepository = productWriteRepository;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         [HttpGet]
-        public IActionResult GetProducts([FromQuery] Pagination pagination)
+        public async Task<IActionResult> GetProducts([FromQuery] Pagination pagination)
         {
-            var products = _productReadRepository.GetAll(false);
-            return Ok(products);
+            int totalCount = await _productReadRepository.GetAll(false).CountAsync();
+            var products = await _productReadRepository.GetAll(false)
+                .Skip((pagination.Page - 1) * pagination.Size)
+                .Take(pagination.Size)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Name,
+                    p.Stock,
+                    p.Price,
+                    p.CreatedDate
+                }).ToListAsync();
+            return Ok(new
+            {
+                TotalCount = totalCount,
+                Products = products
+            });
         }
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id)
@@ -51,6 +69,26 @@ namespace ETicaretAPI.API.Controllers
         {
              _productWriteRepository.Update(product);
             await _productWriteRepository.SaveAsync();
+            return Ok();
+        }
+        [HttpPost("[action]")]
+        public async Task<IActionResult> Upload()
+        {
+            string path = Path.Combine(_webHostEnvironment.WebRootPath, "resource/product-images");
+            if(!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+            Random random = new Random();
+            foreach(var file in Request.Form.Files)
+            {
+                string fileName = file.FileName;
+                string newFileName = $"{random.Next()}{Path.GetExtension(fileName)}";
+                string fullPath = Path.Combine(path, newFileName);
+                using FileStream fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, useAsync: false);
+                await file.CopyToAsync(fileStream);
+                await fileStream.FlushAsync();
+            }
             return Ok();
         }
 
