@@ -76,8 +76,11 @@ namespace ETicaretAPI.API.Controllers
             return Ok();
         }
         [HttpPost("[action]")]
-        public async Task<IActionResult> Upload()
+        public async Task<IActionResult> Upload([FromQuery] string id)
         {
+            Product product = await _productReadRepository.GetByIdAsync(id);
+            if (product == null)
+                return NotFound("Ürün bulunamadı!");
             string path = Path.Combine(_webHostEnvironment.WebRootPath, "resource/product-images");
             if(!Directory.Exists(path))
             {
@@ -95,8 +98,13 @@ namespace ETicaretAPI.API.Controllers
                 await fileStream.FlushAsync();
                 datas.Add(new ProductImageFile { Path = "resource/product-images", FileName = newFileName, Storage = "Local" });
             }
-            await _productImageFileWriteRepository.AddRangeAsync(datas);
-            await _productImageFileWriteRepository.SaveAsync();
+            if (product.ProductImageFiles == null)
+                product.ProductImageFiles = new List<ProductImageFile>();
+            foreach (var image in datas)
+            {
+                product.ProductImageFiles.Add(image);
+            }
+            await _productWriteRepository.SaveAsync();
             return Ok();
         }
 
