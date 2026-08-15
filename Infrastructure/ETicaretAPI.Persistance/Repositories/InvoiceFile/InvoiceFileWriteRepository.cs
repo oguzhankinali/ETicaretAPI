@@ -1,0 +1,19 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using ETicaretAPI.Application.Repositories;
+using ETicaretAPI.Domain.Entities.Files;
+using ETicaretAPI.Persistance.Contexts;
+
+
+namespace ETicaretAPI.Persistance.Repositories
+{
+    public class InvoiceFileWriteRepository : WriteRepository<InvoiceFile>, IInvoiceFileWriteRepository
+    {
+        public InvoiceFileWriteRepository(ETicaretAPIDbContext context) : base(context)
+        {
+        }
+    }
+}

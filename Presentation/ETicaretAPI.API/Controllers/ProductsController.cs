@@ -1,6 +1,7 @@
 ﻿using ETicaretAPI.Application.Repositories;
 using ETicaretAPI.Application.RequestParameters;
 using ETicaretAPI.Domain.Entities;
+using ETicaretAPI.Domain.Entities.Files;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,12 +16,15 @@ namespace ETicaretAPI.API.Controllers
         private readonly IProductWriteRepository _productWriteRepository;
         private readonly IWebHostEnvironment _webHostEnvironment;
 
+        private readonly IProductImageFileWriteRepository _productImageFileWriteRepository;
 
-        public ProductsController(IProductReadRepository productReadRepository, IProductWriteRepository productWriteRepository, IWebHostEnvironment webHostEnvironment)
+
+        public ProductsController(IProductReadRepository productReadRepository, IProductWriteRepository productWriteRepository, IWebHostEnvironment webHostEnvironment, IProductImageFileWriteRepository productImageFileWriteRepository)
         {
             _productReadRepository = productReadRepository;
             _productWriteRepository = productWriteRepository;
             _webHostEnvironment = webHostEnvironment;
+            _productImageFileWriteRepository = productImageFileWriteRepository;
         }
 
         [HttpGet]
@@ -80,7 +84,8 @@ namespace ETicaretAPI.API.Controllers
                 Directory.CreateDirectory(path);
             }
             Random random = new Random();
-            foreach(var file in Request.Form.Files)
+            List<ProductImageFile> datas = new List<ProductImageFile>();
+            foreach (IFormFile file in Request.Form.Files)
             {
                 string fileName = file.FileName;
                 string newFileName = $"{random.Next()}{Path.GetExtension(fileName)}";
@@ -88,7 +93,10 @@ namespace ETicaretAPI.API.Controllers
                 using FileStream fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, useAsync: false);
                 await file.CopyToAsync(fileStream);
                 await fileStream.FlushAsync();
+                datas.Add(new ProductImageFile { Path = "resource/product-images", FileName = newFileName, Storage = "Local" });
             }
+            await _productImageFileWriteRepository.AddRangeAsync(datas);
+            await _productImageFileWriteRepository.SaveAsync();
             return Ok();
         }
 
