@@ -1,6 +1,8 @@
 
 using ETicaretAPI.Application.Validators.Products;
+using ETicaretAPI.Infrastructure;
 using ETicaretAPI.Infrastructure.Filters;
+using ETicaretAPI.Infrastructure.Services.Storage.Local;
 using ETicaretAPI.Persistance;
 using FluentValidation;
 
@@ -13,6 +15,7 @@ namespace ETicaretAPI.API
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddPersistanceServices(builder.Configuration);
+            builder.Services.AddStorage<LocalStorage>();
             builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
             policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "http://localhost:5173", "https://localhost:5173").AllowAnyHeader().AllowCredentials().AllowAnyMethod()));
             builder.Services.AddControllers(options => options.Filters.Add<ValidationFilter>()).ConfigureApiBehaviorOptions(options =>
