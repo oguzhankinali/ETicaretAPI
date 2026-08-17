@@ -1,4 +1,5 @@
-﻿using ETicaretAPI.Application.Repositories;
+﻿using ETicaretAPI.Application.Abstraction.Storage;
+using ETicaretAPI.Application.Repositories;
 using ETicaretAPI.Application.RequestParameters;
 using ETicaretAPI.Domain.Entities;
 using ETicaretAPI.Domain.Entities.Files;
@@ -14,17 +15,18 @@ namespace ETicaretAPI.API.Controllers
     {
         private readonly IProductReadRepository _productReadRepository;
         private readonly IProductWriteRepository _productWriteRepository;
-        private readonly IWebHostEnvironment _webHostEnvironment;
+        
 
         private readonly IProductImageFileWriteRepository _productImageFileWriteRepository;
+        private readonly IStorageService _storageService;
 
 
-        public ProductsController(IProductReadRepository productReadRepository, IProductWriteRepository productWriteRepository, IWebHostEnvironment webHostEnvironment, IProductImageFileWriteRepository productImageFileWriteRepository)
+        public ProductsController(IProductReadRepository productReadRepository, IProductWriteRepository productWriteRepository, IProductImageFileWriteRepository productImageFileWriteRepository, IStorageService storageService)
         {
             _productReadRepository = productReadRepository;
             _productWriteRepository = productWriteRepository;
-            _webHostEnvironment = webHostEnvironment;
             _productImageFileWriteRepository = productImageFileWriteRepository;
+            _storageService = storageService;
         }
 
         [HttpGet]
@@ -81,30 +83,16 @@ namespace ETicaretAPI.API.Controllers
             Product product = await _productReadRepository.GetByIdAsync(id);
             if (product == null)
                 return NotFound("Ürün bulunamadı!");
-            string path = Path.Combine(_webHostEnvironment.WebRootPath, "resource/product-images");
-            if(!Directory.Exists(path))
+            List<(string fileName, string pathOrContainerName)> result = await _storageService.UploadAsync("resource/product-images", Request.Form.Files);
+            var datas = result.Select(d => new ProductImageFile
             {
-                Directory.CreateDirectory(path);
-            }
-            Random random = new Random();
-            List<ProductImageFile> datas = new List<ProductImageFile>();
-            foreach (IFormFile file in Request.Form.Files)
-            {
-                string fileName = file.FileName;
-                string newFileName = $"{random.Next()}{Path.GetExtension(fileName)}";
-                string fullPath = Path.Combine(path, newFileName);
-                using FileStream fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, useAsync: false);
-                await file.CopyToAsync(fileStream);
-                await fileStream.FlushAsync();
-                datas.Add(new ProductImageFile { Path = "resource/product-images", FileName = newFileName, Storage = "Local" });
-            }
-            if (product.ProductImageFiles == null)
-                product.ProductImageFiles = new List<ProductImageFile>();
-            foreach (var image in datas)
-            {
-                product.ProductImageFiles.Add(image);
-            }
-            await _productWriteRepository.SaveAsync();
+                FileName = d.fileName,
+                Path = d.pathOrContainerName,
+                Storage = _storageService.StorageName,
+                Products = new List<Product> { product }
+            }).ToList();
+            await _productImageFileWriteRepository.AddRangeAsync(datas); 
+            await _productImageFileWriteRepository.SaveAsync();
             return Ok();
         }
 
