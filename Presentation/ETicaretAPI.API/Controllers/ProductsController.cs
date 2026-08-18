@@ -3,6 +3,7 @@ using ETicaretAPI.Application.Repositories;
 using ETicaretAPI.Application.RequestParameters;
 using ETicaretAPI.Domain.Entities;
 using ETicaretAPI.Domain.Entities.Files;
+using ETicaretAPI.Persistance.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,7 @@ namespace ETicaretAPI.API.Controllers
     {
         private readonly IProductReadRepository _productReadRepository;
         private readonly IProductWriteRepository _productWriteRepository;
-        
+
 
         private readonly IProductImageFileWriteRepository _productImageFileWriteRepository;
         private readonly IStorageService _storageService;
@@ -73,7 +74,7 @@ namespace ETicaretAPI.API.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateProduct(Product product)
         {
-             _productWriteRepository.Update(product);
+            _productWriteRepository.Update(product);
             await _productWriteRepository.SaveAsync();
             return Ok();
         }
@@ -91,8 +92,31 @@ namespace ETicaretAPI.API.Controllers
                 Storage = _storageService.StorageName,
                 Products = new List<Product> { product }
             }).ToList();
-            await _productImageFileWriteRepository.AddRangeAsync(datas); 
+            await _productImageFileWriteRepository.AddRangeAsync(datas);
             await _productImageFileWriteRepository.SaveAsync();
+            return Ok();
+        }
+        [HttpGet("[Action]/{id}")]
+        public async Task<IActionResult> GetProductImages([FromRoute] string id)
+        {
+            var product = await _productReadRepository.Table.Include(p => p.ProductImageFiles).FirstOrDefaultAsync(p => p.Id == Guid.Parse(id));
+            if (product == null)
+                return NotFound();
+            return Ok(product.ProductImageFiles.Select(p => new { p.Path, p.FileName, p.Id }));
+
+        }
+
+        [HttpDelete("[action]/{id}")]
+        public async Task<IActionResult> DeleteProductImage([FromRoute] string id, [FromQuery] string imageId)
+        {
+            var product = await _productReadRepository.Table.Include(p => p.ProductImageFiles).FirstOrDefaultAsync(p => p.Id == Guid.Parse(id));
+            if (product == null)
+                return NotFound();
+            ProductImageFile? productImageFile = product.ProductImageFiles.FirstOrDefault(p => p.Id == Guid.Parse(imageId));
+            if (productImageFile == null)
+                return NotFound();
+            product.ProductImageFiles.Remove(productImageFile);
+            await _productWriteRepository.SaveAsync();
             return Ok();
         }
 
