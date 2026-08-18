@@ -1,9 +1,11 @@
 ﻿using ETicaretAPI.Application.Abstraction.Storage;
+using ETicaretAPI.Infrastructure.Operations;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -52,7 +54,7 @@ namespace ETicaretAPI.Infrastructure.Services.Storage.Local
             List<(string fileName, string pathOrContainerName)> datas = new();
             foreach(IFormFile file in files)
             {
-                string newFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                string newFileName = await FileRenameAsync(path, file.FileName);
                 string fullPath = Path.Combine(path, newFileName);
                 using FileStream fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, useAsync: true);
                 await file.CopyToAsync(fileStream);
@@ -60,6 +62,47 @@ namespace ETicaretAPI.Infrastructure.Services.Storage.Local
                 datas.Add((newFileName, pathOrContainerName));
             }
             return datas;
+        }
+        private async Task<string> FileRenameAsync(string path, string fileName, bool first = true)
+        {
+            string extension = Path.GetExtension(fileName);
+            string oldName = Path.GetFileNameWithoutExtension(fileName);
+            string cleanName = "";
+            
+            if (first)
+            {
+                cleanName =NameOperation.CharacterRegulatory(oldName);            
+            }
+            else
+            {
+                cleanName = oldName;
+            }
+            string newFileName = $"{cleanName}{extension}";
+            if (File.Exists(Path.Combine(path, newFileName)))
+            {
+                int lastIndex = cleanName.LastIndexOf("-");
+                if(lastIndex == -1)
+                {
+                    return await FileRenameAsync(path, $"{cleanName}-1{extension}", false);
+                }
+                else
+                {
+                    string lastPart = cleanName.Substring(lastIndex + 1);
+
+                    if (int.TryParse(lastPart, out int index)){
+                        index++;
+                        cleanName = $"{cleanName.Substring(0, lastIndex)}-{index}";
+                        return await FileRenameAsync(path, $"{cleanName}{extension}", false);
+                    }
+                    else
+                    {
+                        cleanName = $"{cleanName}-1";
+                        return await FileRenameAsync(path, $"{cleanName}{extension}", false);
+                    }
+                }
+            }
+            else
+                return newFileName;
         }
     }
 }
