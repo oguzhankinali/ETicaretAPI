@@ -84,7 +84,7 @@ namespace ETicaretAPI.API.Controllers
             Product product = await _productReadRepository.GetByIdAsync(id);
             if (product == null)
                 return NotFound("Ürün bulunamadı!");
-            List<(string fileName, string pathOrContainerName)> result = await _storageService.UploadAsync("resource/product-images", Request.Form.Files);
+            List<(string fileName, string pathOrContainerName)> result = await _storageService.UploadAsync("product-images", Request.Form.Files);
             var datas = result.Select(d => new ProductImageFile
             {
                 FileName = d.fileName,

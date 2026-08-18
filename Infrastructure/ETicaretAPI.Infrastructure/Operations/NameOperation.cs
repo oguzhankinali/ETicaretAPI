@@ -43,13 +43,8 @@ namespace ETicaretAPI.Infrastructure.Operations
                        .Replace("\"", "")
                        .Replace("_", "-")
                        .Replace(" ", "-");
-                       
-
-
-
-
-
-
+            while (cleanName.Contains("--"))
+                cleanName = cleanName.Replace("--", "-");
             return cleanName;
         }
     }

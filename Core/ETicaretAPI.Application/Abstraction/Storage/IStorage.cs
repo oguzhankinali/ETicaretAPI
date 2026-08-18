@@ -13,8 +13,8 @@ namespace ETicaretAPI.Application.Abstraction.Storage
 
         Task DeleteAsync(string pathOrContainerName, string fileName);
 
-        List<string> GetFiles(string pathOrContainerName);
+        Task<List<string>> GetFiles(string pathOrContainerName);
 
-        bool HasFile(string pathOrContainerName, string fileName);
+        Task<bool> HasFile(string pathOrContainerName, string fileName);
     }
 }

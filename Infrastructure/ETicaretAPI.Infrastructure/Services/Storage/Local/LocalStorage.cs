@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace ETicaretAPI.Infrastructure.Services.Storage.Local
 {
-    public class LocalStorage : ILocalStorage
+    public class LocalStorage : Storage,ILocalStorage
     {
         private readonly IWebHostEnvironment _webHostEnvironment;
 
@@ -31,18 +31,18 @@ namespace ETicaretAPI.Infrastructure.Services.Storage.Local
 
         }
 
-        public List<string> GetFiles(string pathOrContainerName)
+        public Task<List<string>> GetFiles(string pathOrContainerName)
         {
             string filePath = Path.Combine(_webHostEnvironment.WebRootPath, pathOrContainerName);
             DirectoryInfo directoryInfo = new DirectoryInfo(filePath);
             List<string> files = directoryInfo.GetFiles().Select(f=>f.Name).ToList();
-            return files;
+            return Task.FromResult(files);
         }
 
-        public bool HasFile(string pathOrContainerName, string fileName)
+        public Task<bool> HasFile(string pathOrContainerName, string fileName)
         {
             string path = Path.Combine(_webHostEnvironment.WebRootPath, pathOrContainerName, fileName);
-            return File.Exists(path);
+            return Task.FromResult<bool>(File.Exists(path));
             
         }
 
@@ -54,7 +54,7 @@ namespace ETicaretAPI.Infrastructure.Services.Storage.Local
             List<(string fileName, string pathOrContainerName)> datas = new();
             foreach(IFormFile file in files)
             {
-                string newFileName = await FileRenameAsync(path, file.FileName);
+                string newFileName = await FileRenameAsync(path, file.FileName, HasFile);
                 string fullPath = Path.Combine(path, newFileName);
                 using FileStream fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write, FileShare.None, 1024 * 1024, useAsync: true);
                 await file.CopyToAsync(fileStream);
@@ -63,46 +63,6 @@ namespace ETicaretAPI.Infrastructure.Services.Storage.Local
             }
             return datas;
         }
-        private async Task<string> FileRenameAsync(string path, string fileName, bool first = true)
-        {
-            string extension = Path.GetExtension(fileName);
-            string oldName = Path.GetFileNameWithoutExtension(fileName);
-            string cleanName = "";
-            
-            if (first)
-            {
-                cleanName =NameOperation.CharacterRegulatory(oldName);            
-            }
-            else
-            {
-                cleanName = oldName;
-            }
-            string newFileName = $"{cleanName}{extension}";
-            if (File.Exists(Path.Combine(path, newFileName)))
-            {
-                int lastIndex = cleanName.LastIndexOf("-");
-                if(lastIndex == -1)
-                {
-                    return await FileRenameAsync(path, $"{cleanName}-1{extension}", false);
-                }
-                else
-                {
-                    string lastPart = cleanName.Substring(lastIndex + 1);
-
-                    if (int.TryParse(lastPart, out int index)){
-                        index++;
-                        cleanName = $"{cleanName.Substring(0, lastIndex)}-{index}";
-                        return await FileRenameAsync(path, $"{cleanName}{extension}", false);
-                    }
-                    else
-                    {
-                        cleanName = $"{cleanName}-1";
-                        return await FileRenameAsync(path, $"{cleanName}{extension}", false);
-                    }
-                }
-            }
-            else
-                return newFileName;
-        }
+        
     }
 }
