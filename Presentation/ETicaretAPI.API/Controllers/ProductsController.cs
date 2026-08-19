@@ -115,6 +115,7 @@ namespace ETicaretAPI.API.Controllers
             ProductImageFile? productImageFile = product.ProductImageFiles.FirstOrDefault(p => p.Id == Guid.Parse(imageId));
             if (productImageFile == null)
                 return NotFound();
+            await _storageService.DeleteAsync(productImageFile.Path, productImageFile.FileName);
             product.ProductImageFiles.Remove(productImageFile);
             await _productWriteRepository.SaveAsync();
             return Ok();
