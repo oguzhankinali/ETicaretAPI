@@ -35,6 +35,7 @@ namespace ETicaretAPI.API.Controllers
         {
             int totalCount = await _productReadRepository.GetAll(false).CountAsync();
             var products = await _productReadRepository.GetAll(false)
+                .Include(p => p.ProductImageFiles)
                 .Skip((pagination.Page - 1) * pagination.Size)
                 .Take(pagination.Size)
                 .Select(p => new
@@ -43,7 +44,8 @@ namespace ETicaretAPI.API.Controllers
                     p.Name,
                     p.Stock,
                     p.Price,
-                    p.CreatedDate
+                    p.CreatedDate,
+                    p.ProductImageFiles
                 }).ToListAsync();
             return Ok(new
             {
@@ -54,7 +56,21 @@ namespace ETicaretAPI.API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id)
         {
-            var product = await _productReadRepository.GetByIdAsync(id, false);
+            var product = await _productReadRepository.Table.Include(p => p.ProductImageFiles).Where(p => p.Id == Guid.Parse(id)).Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.Stock,
+                p.Price,
+                ProductImageFiles = p.ProductImageFiles.Select(pif => new
+                {
+                    pif.Id,
+                    pif.FileName,
+                    pif.Path
+                })
+            }).FirstOrDefaultAsync();
+            if (product == null)
+                return NotFound();
             return Ok(product);
         }
         [HttpPost]
