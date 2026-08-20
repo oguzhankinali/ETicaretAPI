@@ -3,6 +3,7 @@ using ETicaretAPI.Application.Features.Products.Commands.CreateProduct;
 using ETicaretAPI.Application.Features.Products.Commands.RemoveProduct;
 using ETicaretAPI.Application.Features.Products.Commands.UpdateProduct;
 using ETicaretAPI.Application.Features.Products.Queries.GetAllProduct;
+using ETicaretAPI.Application.Features.Products.Queries.GetByIdProduct;
 using ETicaretAPI.Application.Repositories;
 using ETicaretAPI.Application.RequestParameters;
 using ETicaretAPI.Domain.Entities;
@@ -45,24 +46,12 @@ namespace ETicaretAPI.API.Controllers
             return Ok(response);
         }
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(string id)
+        public async Task<IActionResult> GetById([FromRoute] GetByIdProductQueryRequest getByIdProductQueryRequest)
         {
-            var product = await _productReadRepository.Table.Include(p => p.ProductImageFiles).Where(p => p.Id == Guid.Parse(id)).Select(p => new
-            {
-                p.Id,
-                p.Name,
-                p.Stock,
-                p.Price,
-                ProductImageFiles = p.ProductImageFiles.Select(pif => new
-                {
-                    pif.Id,
-                    pif.FileName,
-                    pif.Path
-                })
-            }).FirstOrDefaultAsync();
-            if (product == null)
+            GetByIdProductQueryResponse getByIdProductQueryResponse = await _mediator.Send(getByIdProductQueryRequest);
+            if (getByIdProductQueryResponse == null)
                 return NotFound();
-            return Ok(product);
+            return Ok(getByIdProductQueryResponse);
         }
 
         [HttpPost]
