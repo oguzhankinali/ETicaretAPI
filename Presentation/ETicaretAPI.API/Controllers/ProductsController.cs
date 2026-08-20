@@ -1,22 +1,13 @@
-﻿using ETicaretAPI.Application.Abstraction.Storage;
-using ETicaretAPI.Application.Features.Products.Commands.CreateProduct;
+﻿using ETicaretAPI.Application.Features.Products.Commands.CreateProduct;
 using ETicaretAPI.Application.Features.Products.Commands.DeleteProductImage;
-using ETicaretAPI.Application.Features.Products.Commands.DeleteProductImages;
 using ETicaretAPI.Application.Features.Products.Commands.RemoveProduct;
 using ETicaretAPI.Application.Features.Products.Commands.UpdateProduct;
 using ETicaretAPI.Application.Features.Products.Commands.UploadProductImage;
 using ETicaretAPI.Application.Features.Products.Queries.GetAllProduct;
 using ETicaretAPI.Application.Features.Products.Queries.GetByIdProduct;
 using ETicaretAPI.Application.Features.Products.Queries.GetProductImages;
-using ETicaretAPI.Application.Repositories;
-using ETicaretAPI.Application.RequestParameters;
-using ETicaretAPI.Domain.Entities;
-using ETicaretAPI.Domain.Entities.Files;
-using ETicaretAPI.Persistance.Repositories;
 using MediatR;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Net;
 
 namespace ETicaretAPI.API.Controllers
@@ -49,7 +40,7 @@ namespace ETicaretAPI.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddProduct(CreateProductCommandRequest createProductCommandRequest)
+        public async Task<IActionResult> AddProduct([FromBody] CreateProductCommandRequest createProductCommandRequest)
         {
             CreateProductCommandResponse response = await _mediator.Send(createProductCommandRequest);
             return StatusCode((int)HttpStatusCode.Created);
