@@ -1,5 +1,7 @@
 ﻿using ETicaretAPI.Application.Abstraction.Storage;
 using ETicaretAPI.Application.Features.Products.Commands.CreateProduct;
+using ETicaretAPI.Application.Features.Products.Commands.RemoveProduct;
+using ETicaretAPI.Application.Features.Products.Commands.UpdateProduct;
 using ETicaretAPI.Application.Features.Products.Queries.GetAllProduct;
 using ETicaretAPI.Application.Repositories;
 using ETicaretAPI.Application.RequestParameters;
@@ -71,17 +73,15 @@ namespace ETicaretAPI.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(string id)
+        public async Task<IActionResult> DeleteProduct([FromRoute] RemoveProductCommandRequest removeProductCommandRequest)
         {
-            await _productWriteRepository.RemoveAsync(id);
-            await _productWriteRepository.SaveAsync();
+            RemoveProductCommandResponse response = await _mediator.Send(removeProductCommandRequest);
             return Ok();
         }
         [HttpPut]
-        public async Task<IActionResult> UpdateProduct(Product product)
+        public async Task<IActionResult> UpdateProduct([FromBody] UpdateProductCommandRequest updateProductCommandRequest)
         {
-            _productWriteRepository.Update(product);
-            await _productWriteRepository.SaveAsync();
+            UpdateProductCommandResponse updateProductCommandResponse = await _mediator.Send(updateProductCommandRequest);
             return Ok();
         }
         [HttpPost("[action]")]
