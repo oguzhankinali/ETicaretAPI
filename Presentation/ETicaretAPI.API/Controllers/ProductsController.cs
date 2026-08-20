@@ -4,6 +4,7 @@ using ETicaretAPI.Application.Features.Products.Commands.DeleteProductImage;
 using ETicaretAPI.Application.Features.Products.Commands.DeleteProductImages;
 using ETicaretAPI.Application.Features.Products.Commands.RemoveProduct;
 using ETicaretAPI.Application.Features.Products.Commands.UpdateProduct;
+using ETicaretAPI.Application.Features.Products.Commands.UploadProductImage;
 using ETicaretAPI.Application.Features.Products.Queries.GetAllProduct;
 using ETicaretAPI.Application.Features.Products.Queries.GetByIdProduct;
 using ETicaretAPI.Application.Features.Products.Queries.GetProductImages;
@@ -24,22 +25,12 @@ namespace ETicaretAPI.API.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        private readonly IProductReadRepository _productReadRepository;
-        private readonly IProductWriteRepository _productWriteRepository;
-
-
-        private readonly IProductImageFileWriteRepository _productImageFileWriteRepository;
-        private readonly IStorageService _storageService;
         private readonly IMediator _mediator;
 
 
-        public ProductsController(IMediator mediator, IProductReadRepository productReadRepository, IProductWriteRepository productWriteRepository, IProductImageFileWriteRepository productImageFileWriteRepository, IStorageService storageService)
+        public ProductsController(IMediator mediator)
         {
             _mediator = mediator;
-            _productReadRepository = productReadRepository;
-            _productWriteRepository = productWriteRepository;
-            _productImageFileWriteRepository = productImageFileWriteRepository;
-            _storageService = storageService;
         }
 
         [HttpGet]
@@ -79,20 +70,13 @@ namespace ETicaretAPI.API.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> Upload([FromQuery] string id)
         {
-            Product product = await _productReadRepository.GetByIdAsync(id);
-            if (product == null)
-                return NotFound("Ürün bulunamadı!");
-            List<(string fileName, string pathOrContainerName)> result = await _storageService.UploadAsync("product-images", Request.Form.Files);
-            var datas = result.Select(d => new ProductImageFile
-            {
-                FileName = d.fileName,
-                Path = d.pathOrContainerName,
-                Storage = _storageService.StorageName,
-                Products = new List<Product> { product }
-            }).ToList();
-            await _productImageFileWriteRepository.AddRangeAsync(datas);
-            await _productImageFileWriteRepository.SaveAsync();
-            return Ok();
+            await _mediator.Send(new UploadProductImageCommandRequest 
+            { 
+            Id = id,
+            Files = Request.Form.Files
+            });
+            return StatusCode((int)HttpStatusCode.Created);
+            
         }
         [HttpGet("[Action]/{Id}")]
         public async Task<IActionResult> GetProductImages([FromRoute] GetProductImagesQueryRequest getProductImagesQueryRequest)
