@@ -1,5 +1,7 @@
 ﻿using ETicaretAPI.Application.Abstraction.Storage;
 using ETicaretAPI.Application.Features.Products.Commands.CreateProduct;
+using ETicaretAPI.Application.Features.Products.Commands.DeleteProductImage;
+using ETicaretAPI.Application.Features.Products.Commands.DeleteProductImages;
 using ETicaretAPI.Application.Features.Products.Commands.RemoveProduct;
 using ETicaretAPI.Application.Features.Products.Commands.UpdateProduct;
 using ETicaretAPI.Application.Features.Products.Queries.GetAllProduct;
@@ -92,7 +94,7 @@ namespace ETicaretAPI.API.Controllers
             await _productImageFileWriteRepository.SaveAsync();
             return Ok();
         }
-        [HttpGet("[Action]/{id}")]
+        [HttpGet("[Action]/{Id}")]
         public async Task<IActionResult> GetProductImages([FromRoute] GetProductImagesQueryRequest getProductImagesQueryRequest)
         {
             List<GetProductImagesQueryResponse> getProductImagesQueryResponse = await _mediator.Send(getProductImagesQueryRequest);
@@ -103,15 +105,13 @@ namespace ETicaretAPI.API.Controllers
         [HttpDelete("[action]/{id}")]
         public async Task<IActionResult> DeleteProductImage([FromRoute] string id, [FromQuery] string imageId)
         {
-            var product = await _productReadRepository.Table.Include(p => p.ProductImageFiles).FirstOrDefaultAsync(p => p.Id == Guid.Parse(id));
-            if (product == null)
-                return NotFound();
-            ProductImageFile? productImageFile = product.ProductImageFiles.FirstOrDefault(p => p.Id == Guid.Parse(imageId));
-            if (productImageFile == null)
-                return NotFound();
-            await _storageService.DeleteAsync(productImageFile.Path, productImageFile.FileName);
-            product.ProductImageFiles.Remove(productImageFile);
-            await _productWriteRepository.SaveAsync();
+
+            DeleteProductImageCommandResponse response = await _mediator.Send(new DeleteProductImageCommandRequest
+            {
+                Id = id,
+                ImageId = imageId
+            });
+
             return Ok();
         }
 
