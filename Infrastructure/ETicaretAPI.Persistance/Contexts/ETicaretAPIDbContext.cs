@@ -3,15 +3,12 @@ using ETicaretAPI.Domain.Entities.Common;
 using ETicaretAPI.Domain.Entities.Files;
 using File = ETicaretAPI.Domain.Entities.Files.File;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using ETicaretAPI.Domain.Entities.Identity;
 
 namespace ETicaretAPI.Persistance.Contexts
 {
-    public class ETicaretAPIDbContext : DbContext
+    public class ETicaretAPIDbContext : IdentityDbContext<AppUser,AppRole, string>
     {
         public ETicaretAPIDbContext(DbContextOptions options) : base(options)
         {
