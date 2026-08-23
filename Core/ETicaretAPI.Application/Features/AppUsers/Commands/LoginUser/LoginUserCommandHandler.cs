@@ -1,4 +1,5 @@
-﻿using ETicaretAPI.Application.Exceptions;
+﻿using ETicaretAPI.Application.Abstraction.Token;
+using ETicaretAPI.Application.Exceptions;
 using ETicaretAPI.Domain.Entities.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -10,10 +11,13 @@ namespace ETicaretAPI.Application.Features.AppUsers.Commands.LoginUser
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
 
-        public LoginUserCommandHandler(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
+        private readonly ITokenHandler _tokenHandler;
+
+        public LoginUserCommandHandler(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, ITokenHandler tokenHandler)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _tokenHandler = tokenHandler;
         }
 
         public async Task<LoginUserCommandResponse> Handle(LoginUserCommandRequest request, CancellationToken cancellationToken)
@@ -29,10 +33,18 @@ namespace ETicaretAPI.Application.Features.AppUsers.Commands.LoginUser
 
             if (result.Succeeded)
             {
-                
+                DTOs.Token token = _tokenHandler.CreateAccessToken(5);
+                return new LoginUserSuccessCommandResponse()
+                {
+                    Token = token
+                };
             }
+            return new LoginUserErrorCommandResponse()
+            {
+                Message = "Kullanıcı adı veya şifre bulunamadı."
+            };
 
-            return new();
+            
         }
     }
 }
