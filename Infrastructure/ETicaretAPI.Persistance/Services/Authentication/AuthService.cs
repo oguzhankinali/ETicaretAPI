@@ -1,5 +1,6 @@
 ﻿using ETicaretAPI.Application.Abstraction.Services.Authentications;
 using ETicaretAPI.Application.Abstraction.Token;
+using ETicaretAPI.Application.Exceptions;
 using ETicaretAPI.Domain.Entities.Identity;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
@@ -13,11 +14,13 @@ namespace ETicaretAPI.Persistance.Services.Authentication
         private readonly UserManager<AppUser> _userManager;
         private readonly ITokenHandler _tokenHandler;
         private readonly IConfiguration _configuration;
-        public AuthService(UserManager<AppUser> userManager, ITokenHandler tokenHandler, IConfiguration configuration)
+        private readonly SignInManager<AppUser> _signInManager;
+        public AuthService(UserManager<AppUser> userManager, ITokenHandler tokenHandler, IConfiguration configuration, SignInManager<AppUser> signInManager)
         {
             _userManager = userManager;
             _tokenHandler = tokenHandler;
             _configuration = configuration;
+            _signInManager = signInManager;
         }
 
 
@@ -59,9 +62,22 @@ namespace ETicaretAPI.Persistance.Services.Authentication
            return _tokenHandler.CreateAccessToken(accessTokenLifeTime, user);
         }
 
-        public Task<Application.DTOs.Token> LoginAsync(string usernameOrEmail, string password, int accessTokenLifeTime)
+        public async Task<Application.DTOs.Token> LoginAsync(string usernameOrEmail, string password, int accessTokenLifeTime)
         {
-            throw new NotImplementedException();
+            AppUser? user = await _userManager.FindByEmailAsync(usernameOrEmail);
+            if(user == null)
+            {
+                user = await _userManager.FindByNameAsync(usernameOrEmail);
+                if(user==null)
+                    throw new NotFoundUserException("Kullanıcı adı veya şifre hatalı.");
+            }
+            SignInResult result = await _signInManager.CheckPasswordSignInAsync(user, password, false);
+
+            if (result.Succeeded)
+            {
+                return _tokenHandler.CreateAccessToken(accessTokenLifeTime, user);
+            }
+            throw new NotFoundUserException("Kullanıcı adı veya şifre hatalı.");
         }
     }
 }
