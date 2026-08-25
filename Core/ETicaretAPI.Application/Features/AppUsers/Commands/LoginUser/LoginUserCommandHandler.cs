@@ -39,12 +39,10 @@ namespace ETicaretAPI.Application.Features.AppUsers.Commands.LoginUser
                     Token = token
                 };
             }
-            return new LoginUserErrorCommandResponse()
-            {
-                Message = "Kullanıcı adı veya şifre bulunamadı."
-            };
+            throw new NotFoundUserException("Kullanıcı veya şifre hatalı...");
 
-            
+
+
         }
     }
 }
