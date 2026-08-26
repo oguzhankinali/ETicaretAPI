@@ -28,7 +28,7 @@ namespace ETicaretAPI.Persistance.Services.Authentication
         {
             var settings = new GoogleJsonWebSignature.ValidationSettings()
             {
-                Audience = new List<string> { _configuration["ExternalLoginSettings:Google:Client_ID"] }
+                Audience = new List<string> { _configuration["ExternalLoginSettings:Google:ClientId"]! }
             };
 
             var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);

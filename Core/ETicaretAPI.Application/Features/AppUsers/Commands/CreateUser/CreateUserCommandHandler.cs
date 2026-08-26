@@ -1,4 +1,6 @@
-﻿using ETicaretAPI.Application.Exceptions;
+﻿using ETicaretAPI.Application.Abstraction.Services.User;
+using ETicaretAPI.Application.DTOs.User.CreateUser;
+using ETicaretAPI.Application.Exceptions;
 using ETicaretAPI.Domain.Entities.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -12,29 +14,29 @@ namespace ETicaretAPI.Application.Features.AppUsers.Commands.CreateUser
 {
     public class CreateUserCommandHandler : IRequestHandler<CreateUserCommandRequest, CreateUserCommandResponse>
     {
-        private readonly UserManager<AppUser> _userManager;
+        private readonly IUserService _userService;
 
-        public CreateUserCommandHandler(UserManager<AppUser> userManager)
+        public CreateUserCommandHandler(IUserService userService)
         {
-            _userManager = userManager;
+            _userService = userService;
         }
 
         public async Task<CreateUserCommandResponse> Handle(CreateUserCommandRequest request, CancellationToken cancellationToken)
         {
-            IdentityResult result= await _userManager.CreateAsync(new()
+           var user=  new CreateUserDTO()
             {
-                Id = Guid.NewGuid().ToString(),
-                UserName = request.Username,
+                NameSurname = request.NameSurname,
+                Username = request.Username,
                 Email = request.Email,
-                NameSurname = request.NameSurname
-            }, request.Password);
-            if (result.Succeeded)
-                return new()
-                {
-                    Succeeded = true,
-                    Message = "Kullanıcı başarıyla oluşturulmuştur."
-                };
-            throw new UserCreatedFailedException();
+                Password = request.Password,
+                PasswordConfirm = request.PasswordConfirm
+            };
+            CreateUserResponseDTO response = await _userService.CreateUserAsync(user);
+            return new()
+            {
+                Message = response.Message,
+                Succeeded = response.Succeeded,
+            };
             
 
         }
