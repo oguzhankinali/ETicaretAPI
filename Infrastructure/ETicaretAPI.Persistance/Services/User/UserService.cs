@@ -40,6 +40,17 @@ namespace ETicaretAPI.Persistance.Services.User
             }
             throw new UserCreatedFailedException();
         }
-        
+
+        public async Task UpdateRefreshToken(string refreshToken, AppUser user, DateTime createdTime, int addTime)
+        {
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenEndDate = createdTime.AddMinutes(addTime);
+            IdentityResult result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                throw new Exception("Refresh token güncellenirken beklenmeyen bir hata oluştu.");
+            }
+
+        }
     }
 }
