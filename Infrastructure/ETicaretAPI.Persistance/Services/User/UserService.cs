@@ -41,10 +41,10 @@ namespace ETicaretAPI.Persistance.Services.User
             throw new UserCreatedFailedException();
         }
 
-        public async Task UpdateRefreshToken(string refreshToken, AppUser user, DateTime createdTime, int addTime)
+        public async Task UpdateRefreshToken(string refreshToken, AppUser user, DateTime accessTokenEndDate, int addTime)
         {
             user.RefreshToken = refreshToken;
-            user.RefreshTokenEndDate = createdTime.AddMinutes(addTime);
+            user.RefreshTokenEndDate = accessTokenEndDate.AddMinutes(addTime);
             IdentityResult result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
             {
