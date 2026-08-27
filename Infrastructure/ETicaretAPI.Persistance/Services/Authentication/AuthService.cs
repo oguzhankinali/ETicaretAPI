@@ -1,9 +1,12 @@
 ﻿using ETicaretAPI.Application.Abstraction.Services.Authentications;
+using ETicaretAPI.Application.Abstraction.Services.User;
 using ETicaretAPI.Application.Abstraction.Token;
+using ETicaretAPI.Application.DTOs;
 using ETicaretAPI.Application.Exceptions;
 using ETicaretAPI.Domain.Entities.Identity;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 
@@ -15,12 +18,14 @@ namespace ETicaretAPI.Persistance.Services.Authentication
         private readonly ITokenHandler _tokenHandler;
         private readonly IConfiguration _configuration;
         private readonly SignInManager<AppUser> _signInManager;
-        public AuthService(UserManager<AppUser> userManager, ITokenHandler tokenHandler, IConfiguration configuration, SignInManager<AppUser> signInManager)
+        private readonly IUserService _userService;
+        public AuthService(UserManager<AppUser> userManager, ITokenHandler tokenHandler, IConfiguration configuration, SignInManager<AppUser> signInManager, IUserService userService)
         {
             _userManager = userManager;
             _tokenHandler = tokenHandler;
             _configuration = configuration;
             _signInManager = signInManager;
+            _userService = userService;
         }
 
 
@@ -78,6 +83,16 @@ namespace ETicaretAPI.Persistance.Services.Authentication
                 return _tokenHandler.CreateAccessToken(accessTokenLifeTime, user);
             }
             throw new NotFoundUserException("Kullanıcı adı veya şifre hatalı.");
+        }
+
+        public async Task<Token> RefreshTokenLoginAsync(string refreshToken)
+        {
+            AppUser? user = await _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken && u.RefreshTokenEndDate > DateTime.UtcNow);
+            if (user == null)
+                throw new NotFoundUserException("Geçersiz Refresh Token.");
+            var newToken = _tokenHandler.CreateAccessToken(15, user);
+            await _userService.UpdateRefreshToken(newToken.RefreshToken, user, newToken.Expiration, 60);
+            return newToken;
         }
     }
 }

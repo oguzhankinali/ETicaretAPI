@@ -8,5 +8,6 @@ namespace ETicaretAPI.Application.Abstraction.Services.Authentications
 {
     public interface IAuthService : IExternalAuthentication, IInternalAuthentication
     {
+        Task<DTOs.Token> RefreshTokenLoginAsync(string refreshToken);
     }
 }
