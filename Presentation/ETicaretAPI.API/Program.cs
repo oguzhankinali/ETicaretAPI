@@ -1,4 +1,5 @@
 
+using ETicaretAPI.API.Configurations.ColumnWriters;
 using ETicaretAPI.Application;
 using ETicaretAPI.Application.Validators.Products;
 using ETicaretAPI.Infrastructure;
@@ -8,7 +9,13 @@ using ETicaretAPI.Infrastructure.Services.Storage.Local;
 using ETicaretAPI.Persistance;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
+using Serilog.Context;
+using Serilog.Core;
+using Serilog.Sinks.PostgreSQL;
+using System.Security.Claims;
 using System.Text;
 
 namespace ETicaretAPI.API
@@ -19,6 +26,34 @@ namespace ETicaretAPI.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            Logger log = new LoggerConfiguration()
+                .WriteTo.Console()
+                .WriteTo.File("logs/log.txt")
+                .WriteTo.PostgreSQL(builder.Configuration.GetConnectionString("PostgreSQL"), "logs", needAutoCreateTable: true,
+                columnOptions: new Dictionary<string, ColumnWriterBase>
+                {
+                    {"message", new RenderedMessageColumnWriter() },
+                    {"message_template", new MessageTemplateColumnWriter() },
+                    {"level", new LevelColumnWriter() },
+                    {"time_stamp", new TimestampColumnWriter() },
+                    {"exception", new ExceptionColumnWriter()},
+                    {"log_event", new LogEventSerializedColumnWriter() },
+                    {"user_name", new UsernameColumnWriter()}
+                })
+                .Enrich.FromLogContext()
+                .MinimumLevel.Information()
+                .CreateLogger();
+            builder.Host.UseSerilog(log);
+            builder.Services.AddHttpLogging(logging =>
+            {
+                logging.LoggingFields = HttpLoggingFields.All;
+                logging.RequestHeaders.Add("sec-ch-ua");
+                logging.ResponseHeaders.Add("MyResponseHeader");
+                logging.MediaTypeOptions.AddText("application/javascript");
+                logging.RequestBodyLogLimit = 4096;
+                logging.ResponseBodyLogLimit = 4096;
+                logging.CombineLogs = true;
+            });
             builder.Services.AddPersistanceServices(builder.Configuration);
             builder.Services.AddStorage<AzureStorage>();
             builder.Services.AddApplicationServices();
@@ -49,7 +84,9 @@ namespace ETicaretAPI.API
                         ValidateIssuerSigningKey = true, 
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Token:SecurityKey"])),
 
-                        LifetimeValidator = ( notBefore, expires,securityToken,validationParameters) => expires != null ? expires>DateTime.UtcNow: false
+                        LifetimeValidator = ( notBefore, expires,securityToken,validationParameters) => expires != null ? expires>DateTime.UtcNow: false,
+
+                        NameClaimType = ClaimTypes.Name
 
                     };
                 });
@@ -62,12 +99,19 @@ namespace ETicaretAPI.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseSerilogRequestLogging();
+            app.UseHttpLogging();
             app.UseHttpsRedirection();
             app.UseCors();
             app.UseStaticFiles();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.Use(async (context, next) => {
+                var username = context.User?.Identity?.IsAuthenticated == true ? context.User.Identity.Name : null;
+                LogContext.PushProperty("user_name", username);
+                await next();
+            });
+            
             app.MapControllers();
             app.Run();
         }

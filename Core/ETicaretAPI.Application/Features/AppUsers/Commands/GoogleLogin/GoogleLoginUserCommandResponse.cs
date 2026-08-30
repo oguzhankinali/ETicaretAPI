@@ -9,6 +9,6 @@ namespace ETicaretAPI.Application.Features.AppUsers.Commands.GoogleLogin
 {
     public class GoogleLoginUserCommandResponse
     {
-        public Token accessToken { get; set; }
+        public Token Token { get; set; }
     }
 }

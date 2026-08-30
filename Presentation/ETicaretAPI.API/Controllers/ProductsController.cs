@@ -7,6 +7,7 @@ using ETicaretAPI.Application.Features.Products.Queries.GetAllProduct;
 using ETicaretAPI.Application.Features.Products.Queries.GetByIdProduct;
 using ETicaretAPI.Application.Features.Products.Queries.GetProductImages;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -24,6 +25,7 @@ namespace ETicaretAPI.API.Controllers
             _mediator = mediator;
         }
 
+        [Authorize(AuthenticationSchemes = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetProducts([FromQuery] GetAllProductQueryRequest getAllProductQueryRequest)
         {

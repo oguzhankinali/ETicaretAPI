@@ -8,6 +8,7 @@ using Google.Apis.Auth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json.Linq;
 
 
 namespace ETicaretAPI.Persistance.Services.Authentication
@@ -64,7 +65,9 @@ namespace ETicaretAPI.Persistance.Services.Authentication
                 await _userManager.AddLoginAsync(user, info);
             else
                 throw new Exception("Geçersiz harici kimlik doğrulama.");
-           return _tokenHandler.CreateAccessToken(accessTokenLifeTime, user);
+            Token token = _tokenHandler.CreateAccessToken(accessTokenLifeTime, user);
+            await _userService.UpdateRefreshToken(token.RefreshToken, user, token.Expiration, 60);
+            return token;
         }
 
         public async Task<Application.DTOs.Token> LoginAsync(string usernameOrEmail, string password, int accessTokenLifeTime)
@@ -80,7 +83,9 @@ namespace ETicaretAPI.Persistance.Services.Authentication
 
             if (result.Succeeded)
             {
-                return _tokenHandler.CreateAccessToken(accessTokenLifeTime, user);
+                Token token = _tokenHandler.CreateAccessToken(accessTokenLifeTime, user);
+                await _userService.UpdateRefreshToken(token.RefreshToken, user, token.Expiration, 60);
+                return token;
             }
             throw new NotFoundUserException("Kullanıcı adı veya şifre hatalı.");
         }

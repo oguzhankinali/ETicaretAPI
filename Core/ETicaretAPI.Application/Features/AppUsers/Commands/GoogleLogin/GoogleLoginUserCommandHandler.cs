@@ -23,7 +23,8 @@ namespace ETicaretAPI.Application.Features.AppUsers.Commands.GoogleLogin
            Token token = await _authService.GoogleLoginAsync(request.idToken, 900);
             var response = new GoogleLoginUserCommandResponse()
             {
-                accessToken = token
+                Token = token
+
             };
             return response;
         }
