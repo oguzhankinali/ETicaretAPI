@@ -4,6 +4,7 @@
     <Project Path="Core/ETicaretAPI.Domain/ETicaretAPI.Domain.csproj" />
   </Folder>
   <Folder Name="/Infrastructure/">
+    <Project Path="Infrastracture/ETicaretAPI.SignalR/ETicaretAPI.SignalR.csproj" Id="741e19f2-3a25-47db-ae3b-55eaca7a36ca" />
     <Project Path="Infrastructure/ETicaretAPI.Infrastructure/ETicaretAPI.Infrastructure.csproj" />
     <Project Path="Infrastructure/ETicaretAPI.Persistance/ETicaretAPI.Persistance.csproj" />
   </Folder>

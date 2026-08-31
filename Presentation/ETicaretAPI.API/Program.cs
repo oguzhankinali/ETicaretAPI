@@ -1,11 +1,12 @@
 
+using ETicaretAPI.SignalR;
 using ETicaretAPI.API.Configurations.ColumnWriters;
+using ETicaretAPI.API.Extensions;
 using ETicaretAPI.Application;
 using ETicaretAPI.Application.Validators.Products;
 using ETicaretAPI.Infrastructure;
 using ETicaretAPI.Infrastructure.Filters;
 using ETicaretAPI.Infrastructure.Services.Storage.Azure;
-using ETicaretAPI.Infrastructure.Services.Storage.Local;
 using ETicaretAPI.Persistance;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -17,6 +18,7 @@ using Serilog.Core;
 using Serilog.Sinks.PostgreSQL;
 using System.Security.Claims;
 using System.Text;
+using ETicaretAPI.SignalR.Hubs;
 
 namespace ETicaretAPI.API
 {
@@ -58,6 +60,8 @@ namespace ETicaretAPI.API
             builder.Services.AddStorage<AzureStorage>();
             builder.Services.AddApplicationServices();
             builder.Services.AddInfrastructureServices();
+            builder.Services.AddSignalRServices();
+
             builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
             policy.WithOrigins("http://localhost:3000", "https://localhost:3000", "http://localhost:5173", "https://localhost:5173").AllowAnyHeader().AllowCredentials().AllowAnyMethod()));
             builder.Services.AddControllers(options => options.Filters.Add<ValidationFilter>()).ConfigureApiBehaviorOptions(options =>
@@ -99,6 +103,7 @@ namespace ETicaretAPI.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            app.ConfigureExceptionHandler<Program>(app.Services.GetRequiredService<ILogger<Program>>());
             app.UseSerilogRequestLogging();
             app.UseHttpLogging();
             app.UseHttpsRedirection();
@@ -106,13 +111,14 @@ namespace ETicaretAPI.API
             app.UseStaticFiles();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.Use(async (context, next) => {
+            app.Use(async (context, next) => {  
                 var username = context.User?.Identity?.IsAuthenticated == true ? context.User.Identity.Name : null;
                 LogContext.PushProperty("user_name", username);
                 await next();
             });
             
             app.MapControllers();
+            app.MapHubs();
             app.Run();
         }
     }

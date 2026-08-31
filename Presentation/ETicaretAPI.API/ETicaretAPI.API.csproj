@@ -22,11 +22,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Core\ETicaretAPI.Application\ETicaretAPI.Application.csproj" />
+    <ProjectReference Include="..\..\Infrastracture\ETicaretAPI.SignalR\ETicaretAPI.SignalR.csproj" />
     <ProjectReference Include="..\..\Infrastructure\ETicaretAPI.Infrastructure\ETicaretAPI.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Infrastructure\ETicaretAPI.Persistance\ETicaretAPI.Persistance.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Middlewares\" />
     <Folder Include="wwwroot\" />
   </ItemGroup>
 
